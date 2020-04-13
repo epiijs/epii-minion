@@ -1,0 +1,14 @@
+tmp
+npm-debug.log
+coverage
+lcov.info
+.nyc_output
+.vscode
+
+.eslintignore
+.eslintrc
+.gitignore
+
+bin
+domain
+test

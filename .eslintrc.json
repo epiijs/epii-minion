@@ -1,0 +1,12 @@
+{
+  "extends": "airbnb-base/legacy",
+  "parserOptions": {
+    "ecmaVersion": 9
+  },
+  "rules": {
+    "no-var": "error",
+    "prefer-const": "error",
+    "comma-dangle": "off",
+    "strict": ["error", "never"]
+  }
+}
