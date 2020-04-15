@@ -1,8 +1,9 @@
+/* eslint-disable global-require,no-param-reassign */
 const fs = require('fs');
 const http = require('http');
 const os = require('os');
 const path = require('path');
-const mime = require('mime-types')
+const mime = require('mime-types');
 const assist = require('./assist');
 const config = require('./config');
 const logger = require('./logger');
@@ -19,6 +20,19 @@ function openBrowser(options) {
   }
 }
 
+function writeOutput(context, o) {
+  const headers = {};
+  headers['Content-Type'] = 'application/json';
+  context.response.writeHead(200, headers);
+
+  let output = o;
+  if (o instanceof Error) {
+    output = { state: false, error: o.message, stack: o.stack };
+  }
+  context.response.write(JSON.stringify(output));
+  context.response.end();
+}
+
 /**
  * serve view
  *
@@ -32,7 +46,7 @@ function serveView(context, view) {
     'Timing-Allow-Origin': '*'
   };
   let viewResult = loaderHTML
-    .replace('${name}', config.name)
+    .replace(/\$\{name\}/, config.name)
     .replace(/\/\$\{key\}/g, path.join(view, 'index'));
   if (config.layout) {
     const styles = (config.layout.styles || [])
@@ -45,7 +59,7 @@ function serveView(context, view) {
   }
   context.response.writeHead(200, headers);
   context.response.write(viewResult);
-  context.response.end()
+  context.response.end();
 }
 
 /**
@@ -54,38 +68,30 @@ function serveView(context, view) {
  * @param {Object} context
  * @param {String} route
  * @param {Object} query
- * @param {Object} body
+ * @param {Object} input
  */
-function serveData(context, route, query, body) {
+function serveData(context, route, query, input) {
   if (assist.isDebug()) {
-    logger.info(`data :: ${route}`, body);
+    logger.info(`data :: ${route}`, input);
   }
+  // todo - validate secure token
   const headers = {};
   headers['Content-Type'] = 'application/json';
-  // todo - validate secure token
   context.response.writeHead(200, headers);
-  context.response.async = true;
   const serverDir = path.join(config.path.root, config.path.server || 'server');
   try {
-    const action = require(path.join(serverDir, route))
-    if (!body.query) body.query = {};
-    if (!body.model) body.model = {};
-    const result = action.call(null, body);
+    const action = require(path.join(serverDir, route));
+    if (!input.query) input.query = {};
+    if (!input.model) input.model = {};
+    const result = action.call(null, input);
     if (!(result instanceof Promise)) {
-      throw new Error('not async api');
+      throw new Error('async api required');
     }
     result
-      .then(json => {
-        context.response.write(JSON.stringify(json))
-        context.response.end()
-      })
-      .catch(error => {
-        context.response.write(JSON.stringify({ state: false, error: error.message, stack: error.stack }))
-        context.response.end()
-      });
+      .then(json => writeOutput(context, json))
+      .catch(error => writeOutput(context, error));
   } catch (error) {
-    context.response.write(JSON.stringify({ state: false, error: error.message, stack: error.stack }));
-    context.response.end();
+    writeOutput(context, error);
   }
 }
 
@@ -94,17 +100,19 @@ function serveData(context, route, query, body) {
  *
  * @param {Object} context
  * @param {String} file
+ * @param {String} root
  */
 async function serveFile(context, file, root) {
   const fullPath = path.join(root || __dirname, file);
   const fileStat = await assist.getFileStat(fullPath);
   if (!fileStat) {
     context.response.writeHead(404);
-    return context.response.end('not found');
+    context.response.end('not found');
+    return;
   }
 
   const headers = {
-    'Connection': 'close',
+    Connection: 'close',
     'Content-Type': mime.contentType(path.extname(file)) || 'application/octet-stream',
     'Content-Length': fileStat.size,
     'Access-Control-Allow-Origin': '*',
@@ -124,9 +132,9 @@ async function serveFile(context, file, root) {
 
   const stream = fs.createReadStream(fullPath);
   stream.pipe(context.response)
-    .on('error', function (error) {
-      logger.halt(error.message)
-      context.response.end()
+    .on('error', (error) => {
+      logger.halt(error.message);
+      context.response.end();
     });
 }
 
@@ -167,12 +175,7 @@ function handleRequest(request, response) {
   // handle data
   if (url.pathname.startsWith(prefixData)) {
     if (request.method !== 'POST') {
-      const headers = {
-        'Content-Type': 'application/json'
-      };
-      context.response.writeHead(200, headers);
-      context.response.write(JSON.stringify({ state: false, error: 'only accept POST in epiiQL' }))
-      context.response.end()
+      writeOutput(context, new Error('only accept POST in epiiQL'));
       return;
     }
     let buffer = '';
@@ -180,7 +183,7 @@ function handleRequest(request, response) {
       buffer += chunk;
     });
     request.on('end', () => {
-      const input = buffer ? JSON.parse(buffer) : {};
+      const input = assist.tryParseJSON(buffer, {});
       serveData(context, url.pathname.replace(prefixData, ''), url.searchParams, input);
     });
     return;
@@ -188,15 +191,15 @@ function handleRequest(request, response) {
 
   // handle file
   if (url.pathname.startsWith(prefixFile)) {
-    const staticDir = path.join(config.path.root, config.path.static);
+    const staticDir = path.join(config.path.root, config.path.static || 'static');
     serveFile(context, url.pathname.replace(prefixFile, ''), staticDir);
     return;
   }
 
   // default response
   if (response.headerSent || response.finished) return;
-  response.writeHead(404)
-  response.end('not found')
+  response.writeHead(404);
+  response.end('not found');
 }
 
 /**
@@ -216,10 +219,7 @@ function createServer(options) {
   fs.writeFileSync(path.join(maindir, 'port'), newOptions.port.toString());
 
   // create http server
-  const httpServer = http
-    .createServer(handleRequest)
-;
-  // httpServer.timeout = 60000
+  const httpServer = http.createServer(handleRequest);
   httpServer.on('clientError', (error, socket) => {
     logger.halt('http error >', error.stack);
     socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');

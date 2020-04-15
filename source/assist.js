@@ -1,20 +1,7 @@
-const fs = require('fs')
-const path = require('path')
-const child_process = require('child_process')
+const fs = require('fs');
+const path = require('path');
+const childProcess = require('child_process');
 const util = require('util');
-
-module.exports = {
-  isDebug,
-  tryParseJSON,
-  bindReadOnly,
-  canAccess,
-  createDirectory,
-  readFile: util.promisify(fs.readFile),
-  writeFile: util.promisify(fs.writeFile),
-  getFileStat,
-  loadModules,
-  startProcess
-}
 
 function isDebug() {
   return process.env.NODE_ENV === 'development';
@@ -30,10 +17,10 @@ function isDebug() {
  */
 function tryParseJSON(text, json) {
   try {
-    var o = JSON.parse(text)
-    return o
+    const o = JSON.parse(text);
+    return o;
   } catch (error) {
-    return json
+    return json;
   }
 }
 
@@ -50,7 +37,7 @@ function bindReadOnly(target, name, value) {
     writable: false,
     configurable: false,
     enumerable: true
-  })
+  });
 }
 
 /**
@@ -61,10 +48,10 @@ function bindReadOnly(target, name, value) {
  */
 function canAccess(p) {
   try {
-    fs.accessSync(p, fs.F_OK)
-    return true
+    fs.accessSync(p, fs.F_OK);
+    return true;
   } catch (error) {
-    return false
+    return false;
   }
 }
 
@@ -76,8 +63,8 @@ function canAccess(p) {
 function createDirectory(dir) {
   const parts = dir.split('/').filter(Boolean);
   let fullPath = '/';
-  for (let i = 0; i < parts.length; i ++) {
-    fullPath = path.join(fullPath, parts[i])
+  for (let i = 0; i < parts.length; i += 1) {
+    fullPath = path.join(fullPath, parts[i]);
     if (!canAccess(fullPath)) {
       fs.mkdirSync(fullPath);
     }
@@ -90,7 +77,7 @@ function createDirectory(dir) {
  * @param  {fs.Stat} stat
  */
 function getFileStat(p) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve,) => {
     fs.stat(p, (error, stat) => {
       if (error) {
         console.error(error);
@@ -98,31 +85,8 @@ function getFileStat(p) {
       } else {
         resolve(stat);
       }
-    })
+    });
   });
-}
-
-/**
- * load modules
- *
- * @param  {String} dir
- * @param  {Function} cb - callback fn(file, module)
- */
-function loadModules(dir, cb) {
-  var files = fs.readdirSync(dir)
-  files.forEach(function (file) {
-    // need *.js
-    if (!/\.js$/.test(file)) return
-
-    try {
-      var o = require(path.join(dir, file))
-      if (cb) cb(file, o)
-    }
-    catch (error) {
-      console.log('failed to load: ' + file)
-      console.log(error)
-    }
-  })
 }
 
 /**
@@ -136,33 +100,37 @@ function loadModules(dir, cb) {
  * @return {Promise}
  */
 function startProcess(command, options) {
-  return new Promise(function (resolve, reject) {
-    /**
-     * exec callback
-     *
-     * @param  {Object} error
-     * @param  {Buffer} stdout
-     * @param  {Buffer} stderr
-     */
-    function execCb (error, stdout, stderr) {
-      // reject if error
-      if (error) return reject(error)
-
-      // resolve if ignore stderr
-      if (options && options.ignore) return resolve(stdout)
-
-      // resolve if null or empty stderr(Buffer)
-      if (!stderr || stderr.length === 0) return resolve(stdout)
-
-      // reject if stderr
-      reject(new Error(stderr.toString()))
-    }
-
+  return new Promise((resolve, reject) => {
     if (options) {
-      if (options.cwd && !existSync(options.cwd)) {
-        return reject(new Error('cwd not found'))
+      if (options.cwd && !canAccess(options.cwd)) {
+        reject(new Error('cwd not found'));
+        return;
       }
     }
-    child_process.exec(command, options, execCb)
-  })
+    childProcess.exec(command, options, (error, stdout, stderr) => {
+      // reject if error
+      if (error) return reject(error);
+
+      // resolve if ignore stderr
+      if (options && options.ignore) return resolve(stdout);
+
+      // resolve if null or empty stderr(Buffer)
+      if (!stderr || stderr.length === 0) return resolve(stdout);
+
+      // reject if stderr
+      return reject(new Error(stderr.toString()));
+    });
+  });
 }
+
+module.exports = {
+  isDebug,
+  tryParseJSON,
+  bindReadOnly,
+  canAccess,
+  createDirectory,
+  readFile: util.promisify(fs.readFile),
+  writeFile: util.promisify(fs.writeFile),
+  getFileStat,
+  startProcess
+};

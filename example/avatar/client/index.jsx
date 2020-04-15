@@ -21,7 +21,7 @@ export default class extends Component {
   render() {
     const { version } = this.state;
     return (
-      <div>
+      <div className='container'>
         <h1>EPII Minion</h1>
         <h2>{version}</h2>
       </div>

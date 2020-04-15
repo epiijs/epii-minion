@@ -9,6 +9,6 @@ lcov.info
 .eslintrc
 .gitignore
 
-bin
-domain
+example
 test
+start.js
