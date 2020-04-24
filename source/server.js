@@ -50,9 +50,9 @@ function serveView(context, view) {
     .replace(/\/\$\{key\}/g, path.join(view, 'index'));
   if (config.layout) {
     const styles = (config.layout.styles || [])
-      .map(e => `<link href="${prefixFile}/${e}" type="stylesheet" />`).join('\n  ');
+      .map(e => `<link rel="stylesheet" href="${prefixFile}/${e}" />`).join('\n  ');
     const scripts = (config.layout.scripts || [])
-      .map(e => `<script src="${prefixFile}/${e}"></script>`).join('\n  ');
+      .map(e => `<script type="application/javascript" src="${prefixFile}/${e}"></script>`).join('\n  ');
     viewResult = viewResult
       .replace('<!-- styles -->', styles)
       .replace('<!-- scripts -->', scripts);

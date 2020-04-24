@@ -8,6 +8,7 @@ lcov.info
 .eslintignore
 .eslintrc
 .gitignore
+.travis.yml
 
 example
 test
