@@ -28,6 +28,10 @@ function writeOutput(context, o) {
   let output = o;
   if (o instanceof Error) {
     output = { state: false, error: o.message, stack: o.stack };
+  } else if (o.state) {
+    logger.warn('NO need to place state in API result');
+  } else {
+    output = { state: true, model: output };
   }
   context.response.write(JSON.stringify(output));
   context.response.end();
@@ -85,7 +89,7 @@ function serveData(context, route, query, input) {
     if (!input.model) input.model = {};
     const result = action.call(null, input);
     if (!(result instanceof Promise)) {
-      throw new Error('async api required');
+      throw new Error('only support async output');
     }
     result
       .then(json => writeOutput(context, json))

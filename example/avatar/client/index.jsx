@@ -14,7 +14,7 @@ export default class extends Component {
     fetch('/__/data/getVersion', { method: 'POST' })
       .then(response => response.json())
       .then(json => {
-        this.setState({ version: json.version });
+        this.setState({ version: json.model.version });
       });
   }
 
