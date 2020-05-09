@@ -84,7 +84,13 @@ function serveData(context, route, query, input) {
   context.response.writeHead(200, headers);
   const serverDir = path.join(config.path.root, config.path.server || 'server');
   try {
-    const action = require(path.join(serverDir, route));
+    const actionPath = require.resolve(path.join(serverDir, route));
+    if (assist.isDebug()) {
+      // hot reload data action
+      delete require.cache[actionPath];
+      logger.warn(`data :: ${route} reload`);
+    }
+    const action = require(actionPath);
     if (!input.query) input.query = {};
     if (!input.model) input.model = {};
     const result = action.call(null, input);

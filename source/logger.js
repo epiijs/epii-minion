@@ -9,7 +9,7 @@ try {
 const config = require('./config');
 
 const TYPE = {
-  info: 'blue',
+  info: 'cyan',
   warn: 'yellow',
   halt: 'red',
   done: 'green'
@@ -21,10 +21,8 @@ Object.keys(TYPE).forEach(name => {
   let LOGO = '';
   module.exports[name] = chalk
     ? function logWithChalk() {
-      if (!LOGO) {
-        LOGO = chalk.bgWhite.blue(` ${config.name || 'unknown'} `);
-      }
-      const head = chalk[TYPE[name]](LOGO);
+      if (!LOGO) LOGO = config.name || 'unknown';
+      const head = chalk[TYPE[name]].bold(LOGO);
       const args = Array.prototype.slice.call(arguments, 0);
       console.log.apply(null, [head].concat(args));
     }

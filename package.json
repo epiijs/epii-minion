@@ -1,13 +1,13 @@
 {
   "name": "@epiijs/minion",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A mini server for small web app.",
   "engines": {
     "node": ">=8.0.0"
   },
   "main": "source/index.js",
   "scripts": {
-    "play": "node start.js",
+    "play": "node example/start.js",
     "lint": "eslint .",
     "test": "eslint . && nyc --reporter=lcov mocha test/index.js --exit",
     "lcov": "nyc report --reporter=text-lcov | coveralls"
@@ -35,7 +35,6 @@
   },
   "devDependencies": {
     "@epiijs/render": "^0.13.1",
-    "chokidar": "^3.3.1",
     "coveralls": "^3.0.14",
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.1.0",
