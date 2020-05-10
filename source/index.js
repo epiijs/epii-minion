@@ -1,9 +1,18 @@
 const assist = require('./assist');
-const server = require('./server');
 const logger = require('./logger');
+const server = require('./server');
 
-module.exports = server.launchServer;
+class QueryError extends Error {
+  constructor(message, state) {
+    super(message);
+    if (state === 0) {
+      throw new Error('error state must be NOT 0');
+    }
+    this.state = state;
+  }
+}
 
-module.exports.assist = assist;
-module.exports.server = server;
-module.exports.logger = logger;
+module.exports = {
+  start: server.launchServer,
+  QueryError
+};

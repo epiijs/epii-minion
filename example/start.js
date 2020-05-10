@@ -8,7 +8,7 @@ async function main() {
   } else {
     await epiiRender.build(config);
   }
-  epiiMinion(config);
+  epiiMinion.start(config);
 }
 
 main();

@@ -27,11 +27,9 @@ function writeOutput(context, o) {
 
   let output = o;
   if (o instanceof Error) {
-    output = { state: false, error: o.message, stack: o.stack };
-  } else if (o.state) {
-    logger.warn('NO need to place state in API result');
+    output = { state: o.state || -1, error: o.message, stack: o.stack };
   } else {
-    output = { state: true, model: output };
+    output = { state: 0, model: output };
   }
   context.response.write(JSON.stringify(output));
   context.response.end();
