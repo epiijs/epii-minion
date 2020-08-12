@@ -6,10 +6,11 @@ lcov.info
 .vscode
 
 .eslintignore
-.eslintrc
+.eslintrc.json
 .gitignore
 .travis.yml
 
 example
 test
+vm.js
 start.js
