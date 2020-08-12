@@ -89,9 +89,7 @@ function serveData(context, route, query, input) {
       logger.warn(`data :: ${route} reload`);
     }
     const action = require(actionPath);
-    if (!input.query) input.query = {};
-    if (!input.model) input.model = {};
-    const result = action.call(null, input);
+    const result = action.call(null, input, query);
     if (!(result instanceof Promise)) {
       throw new Error('only support async output');
     }
