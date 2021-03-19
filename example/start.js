@@ -4,11 +4,11 @@ const config = require('./avatar/config');
 
 async function main() {
   if (process.env.NODE_ENV !== 'production') {
-    await epiiRender.watch(config);
+    await epiiRender.watchBuild(config);
   } else {
-    await epiiRender.build(config);
+    await epiiRender.buildOnce(config);
   }
-  epiiMinion.start(config);
+  epiiMinion.startServer(config);
 }
 
 main();

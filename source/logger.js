@@ -6,10 +6,9 @@ try {
   console.error('chalk not installed');
 }
 
-const config = require('./config');
-
+const LOGO = chalk ? 'epii minion' : '[epii] minion';
 const TYPE = {
-  info: 'cyan',
+  info: 'blue',
   warn: 'yellow',
   halt: 'red',
   done: 'green'
@@ -18,18 +17,13 @@ const TYPE = {
 module.exports = {};
 
 Object.keys(TYPE).forEach(name => {
-  let LOGO = '';
   module.exports[name] = chalk
     ? function logWithChalk() {
-      if (!LOGO) LOGO = config.name || 'unknown';
-      const head = chalk[TYPE[name]].bold(LOGO);
+      const head = chalk[TYPE[name]](LOGO);
       const args = Array.prototype.slice.call(arguments, 0);
       console.log.apply(null, [head].concat(args));
     }
     : function logWithNoChalk() {
-      if (!LOGO) {
-        LOGO = ` ${config.name || 'unknown'} `;
-      }
       const head = LOGO + `[${name}]`;
       const args = Array.prototype.slice.call(arguments, 0);
       console.log.apply(null, [head].concat(args));

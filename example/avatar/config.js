@@ -1,16 +1,9 @@
 module.exports = {
-  name: 'EPII Avatar',
+  name: 'epii-minion',
   port: 8080,
-
   path: {
     root: __dirname,
-    client: 'client',
-    static: 'static'
+    layout: 'layout.html',
   },
-  extern: ['react'],
-
-  layout: {
-    styles: [],
-    scripts: ['assets/react.js', 'assets/react-dom.js']
-  }
+  extern: 'react',
 };

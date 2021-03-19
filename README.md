@@ -10,10 +10,13 @@ A mini server for small web app.
 ### one layer pipeline
 
     (Request)
-        => / Assets | Actions /
+        /__file/* => static/*.*  | static files
+        /__data/* => server/*.js | data actions
     (Response)
 
-### fixed app shell for one page
+### one app shell for single page
+
+default html =>
 
 ```html
 <!DOCTYPE html>
@@ -21,15 +24,11 @@ A mini server for small web app.
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-  <title>YOUR-APP-NAME</title>
-  <link rel="stylesheet" href="/__/file/3rds.css" />
-  <link rel="stylesheet" href="/__/file/view.css" />
+  <link rel="stylesheet" href="/__file/index.css" />
 </head>
 <body>
   <div id="app"></div>
-  <script src="/__/file/3rds.js"></script>
-  <script src="/__/file/view.js"></script>
-  <script src="/__/file/launch.js"></script>
+  <script src="/__file/index.js"></script>
 </body>
 </html>
 ```
@@ -41,10 +40,11 @@ A mini server for small web app.
 ```sh
 (root)
 ├── client
+│   ├── layout.html
 │   └── index.js(x)
 ├── server
-│   ├── ActionA.js
-│   └── ActionB.js
+│   ├── action1.js
+│   └── action2.js
 └── static
     └── (files)
 ```
@@ -54,23 +54,69 @@ A mini server for small web app.
 npm install --save @epiijs/minion@latest
 ```
 
+### write data action
+
+You can simply write functions to be called as data action.
+The name of function will be used as pathname of data action like /__data/functionName.
+
+```js
+export function doAction1(input) {
+  // input = JSON.parse of POST body
+  if (input.arg1) {
+    throw new Error('your error');
+    // status = 200, output = { error: 'your error' }
+  }
+  if (input.arg2) {
+    return { hello: 'world' };
+    // status = 200, output = { model: { hello: 'world' }
+  }
+  // status = 200, output = {}
+}
+```
+Then access data action by /__data/doAction1 with POST body.
+
+#### get more request info
+
+```js
+// POST is the simplest choice for data action. 
+// However, you can get more request info by optional arguments.
+export function doAction2(input, request) {
+  // request is http.IncomingMessage
+}
+```
+
+#### output custom response
+ 
+TODO - will be support
+
 ### use API to start server
 ```js
 const epiiMinion = require('@epiijs/minion');
 
-epiiMinion({
+let config = {
   name: 'YOUR-APP-NAME',
-  port: 8080,
+  port: 9988,
   path: {
     root: __dirname,
+    server: 'server',
+    static: 'static',
+    layout: 'layout.html',
   }
-});
+};
+
+// less configuration
+config = {
+  path: {
+    root: __dirname,
+  },
+};
+
+// start minion server
+epiiMinion.startServer(config);
 ```
 
 ## FAQ
 
-### How to contributing
-
-TODO
+### How to contributing (TODO)
 
 ## Language (TODO)
