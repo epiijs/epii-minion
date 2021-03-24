@@ -11,7 +11,6 @@ export default class extends Component {
   }
 
   componentDidMount() {
-    // epiiQL only support POST
     fetch('/__data/getVersion', { method: 'POST' })
       .then(response => response.json())
       .then(json => {

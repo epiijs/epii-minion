@@ -1,6 +1,6 @@
 {
   "name": "@epiijs/minion",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "A mini server for small web app.",
   "engines": {
     "node": ">=8.0.0"

@@ -18,7 +18,7 @@ const CONTEXT = {
   online: process.env.NODE_ENV !== 'development'
 };
 
-function getLocalDir(key) {
+function getServerDir(key) {
   const config = CONTEXT.config;
   return path.join(config.path.root, config.path[key]);
 }
@@ -73,7 +73,7 @@ async function serveData(response, route, input, request) {
   // TODO - call data generator
   let result = null;
   try {
-    const serverDir = getLocalDir('server');
+    const serverDir = getServerDir('server');
     const actionPath = require.resolve(path.join(serverDir, route));
     if (!CONTEXT.online) {
       // hot reload data action
@@ -172,7 +172,7 @@ function handleRequest(request, response) {
   if (url.pathname.startsWith(FILE_PREFIX)) {
     let fullPath = url.searchParams.get('local');
     if (!fullPath || !c.unsafe) {
-      const staticDir = getLocalDir('static');
+      const staticDir = getServerDir('static');
       const staticFile = url.pathname.replace(FILE_PREFIX, '');
       fullPath = path.join(staticDir, staticFile);
     }

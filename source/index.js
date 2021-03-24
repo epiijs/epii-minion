@@ -28,5 +28,6 @@ async function startServer(config) {
 }
 
 module.exports = {
+  createServer,
   startServer,
 };
