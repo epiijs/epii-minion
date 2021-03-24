@@ -101,6 +101,7 @@ let config = {
     server: 'server',
     static: 'static',
     layout: 'layout.html',
+    aspect: 'aspect.js',
   }
 };
 

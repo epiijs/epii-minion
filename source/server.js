@@ -8,14 +8,15 @@ const logger = require('./logger');
 const statFile = util.promisify(fs.stat);
 const readFile = util.promisify(fs.readFile);
 
-const ROOT_PREFIX = '/';
 const DATA_PREFIX = '/__data';
 const FILE_PREFIX = '/__file';
+const VIEW_HOLDER = /\{\{view\}\}/g;
 
 const CONTEXT = {
   config: null,
   layout: null,
-  online: process.env.NODE_ENV !== 'development'
+  aspect: null,
+  online: process.env.NODE_ENV !== 'development',
 };
 
 function getServerDir(key) {
@@ -52,9 +53,9 @@ function serveView(response, view) {
     'Access-Control-Allow-Origin': '*',
     'Timing-Allow-Origin': '*'
   };
-  // TODO - support view replace
   response.writeHead(200, headers);
-  response.write(CONTEXT.layout);
+  const layoutHTML = CONTEXT.layout.replace(VIEW_HOLDER, view);
+  response.write(layoutHTML);
   response.end();
 }
 
@@ -111,8 +112,10 @@ async function serveData(response, route, input, request) {
  * @param {String} file
  */
 async function serveFile(response, file) {
-  const fileStat = await statFile(file);
-  if (!fileStat) {
+  let fileStat = null;
+  try {
+    fileStat = await statFile(file);
+  } catch (error) {
     response.writeHead(404);
     response.end('not found');
     return;
@@ -148,14 +151,9 @@ function handleRequest(request, response) {
     logger.info('=>', request.url);
   }
 
-  // handle root path
-  if (url.pathname === ROOT_PREFIX) {
-    serveView(response, '/');
-    return;
-  }
-
   // handle data
   if (url.pathname.startsWith(DATA_PREFIX)) {
+    // TODO - support get / put / delete
     let buffer = '';
     request.on('data', chunk => {
       buffer += chunk;
@@ -180,10 +178,8 @@ function handleRequest(request, response) {
     return;
   }
 
-  // default response
-  if (response.headerSent || response.finished) return;
-  response.writeHead(404);
-  response.end('not found');
+  // handle view
+  serveView(response, url.pathname);
 }
 
 /**
@@ -203,7 +199,6 @@ function handleRequest(request, response) {
   if (!c.path.layout) {
     logger.warn('empty config.path.layout, use default layout');
   }
-  if (!c.render) c.render = {};
   if (c.unsafe) {
     logger.warn('unsafe enabled');
   }
@@ -217,14 +212,23 @@ function handleRequest(request, response) {
  * @return {Promise<Function>} standard http.Server callback
  */
 async function createServer(config) {
+  // load config
   const conf = verifyConfig(config);
   CONTEXT.config = conf;
+
+  // load layout
   const layoutPath = conf.path.layout ? 
     path.join(conf.path.root, conf.path.layout) :
     path.join(__dirname, 'layout.html');
   CONTEXT.layout = await readFile(layoutPath, 'utf8');
-  CONTEXT.render = config.render;
 
+  // load aspect
+  if (conf.path.aspect) {
+    const aspectPath = path.join(conf.path.root, conf.path.aspect);
+    CONTEXT.render = require(aspectPath);
+  }
+
+  // to handle request
   return handleRequest;
 }
 
