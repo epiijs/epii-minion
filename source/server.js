@@ -71,7 +71,7 @@ async function serveData(response, route, input, request) {
   if (!CONTEXT.online) {
     logger.info(`data :: ${route}`, input);
   }
-  // TODO - call data generator
+  // TODO - call aspect filter
   let result = null;
   try {
     const serverDir = getServerDir('server');
@@ -90,14 +90,18 @@ async function serveData(response, route, input, request) {
   } catch (error) {
     result = error;
   }
-  // TODO - call data generator (status & output)
+  // short to file
+  if (result instanceof fs.ReadStream) {
+    return serveFile(response, result);
+  }
+  // TODO - call aspect output
   const headers = {};
   headers['Content-Type'] = 'application/json';
   response.writeHead(200, headers);
   // output result
   let output = {};
   if (result instanceof Error) {
-    output = { error: result.message, stack: result.stack };
+    output = { error: result.message, stack: result.stack };    
   } else {
     output = { model: result };
   }
@@ -109,12 +113,14 @@ async function serveData(response, route, input, request) {
  * serve request /__file/*
  *
  * @param {http.ServerResponse} response
- * @param {String} file
+ * @param {String|ReadStream} file
  */
 async function serveFile(response, file) {
+  const filePath = file instanceof fs.ReadStream ? file.path : file;
+
   let fileStat = null;
   try {
-    fileStat = await statFile(file);
+    fileStat = await statFile(filePath);
   } catch (error) {
     response.writeHead(404);
     response.end('not found');
@@ -123,13 +129,13 @@ async function serveFile(response, file) {
 
   const headers = {
     'Connection': 'close',
-    'Content-Type': mime.contentType(path.extname(file)) || 'application/octet-stream',
+    'Content-Type': mime.contentType(path.extname(filePath)) || 'application/octet-stream',
     'Content-Length': fileStat.size,
     'Access-Control-Allow-Origin': '*',
     'Timing-Allow-Origin': '*'
   };
   response.writeHead(200, headers);
-  const stream = fs.createReadStream(file);
+  const stream = file instanceof fs.ReadStream ? file : fs.createReadStream(file);
   stream.pipe(response)
     .on('error', (error) => {
       logger.halt(error.message);

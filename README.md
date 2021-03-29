@@ -70,6 +70,11 @@ export function doAction1(input) {
     return { hello: 'world' };
     // status = 200, output = { model: { hello: 'world' }
   }
+  if (input.arg3) {
+    return fs.createReadStream(input.arg3);
+    // status = 200 for static file output
+    // status = 404 for error
+  }
   // status = 200, output = {}
 }
 ```

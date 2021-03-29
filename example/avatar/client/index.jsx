@@ -30,6 +30,7 @@ export default class extends Component {
         <h1>epii minion</h1>
         <h2>{version}</h2>
         <p>{message}</p>
+        <p><a href='/__data/accessFile' target='_blank'>accessFile</a></p>
       </div>
     );
   }
