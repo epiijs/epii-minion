@@ -84,7 +84,7 @@ Then access data action by /__data/doAction1 with POST body.
 
 ```js
 // POST is the simplest choice for data action. 
-// However, you can get more request info by optional arguments.
+// However, you can get more request info the 2nd param.
 export function doAction2(input, request) {
   // request is http.IncomingMessage
 }
@@ -121,8 +121,30 @@ config = {
 epiiMinion.startServer(config);
 ```
 
-## FAQ
+### use API to start runner
 
-### How to contributing (TODO)
+Runner is the shell of command line for minion server.
 
-## Language (TODO)
+**Reserved options `--help`, `--fork`**.
+
+```js
+const epiiMinion = require('@epiijs/minion');
+
+let config = {
+  name: 'YOUR-APP-NAME',
+  help: 'YOUR-APP-HELP-FILE',
+};
+
+// start minion runner
+epiiMinion.startRunner(config, async ({ command, options }) => {
+  // run your server or do sth else
+});
+```
+
+## Contributing
+
+TODO
+
+## Language
+
+TODO

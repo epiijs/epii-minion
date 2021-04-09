@@ -11,3 +11,18 @@ body {
 .container {
   padding: 1rem;
 }
+
+ul {
+  padding-top: 1rem;
+  list-style: none;
+
+  li {
+    padding: .5rem;
+  }
+}
+
+a {
+  color: #fff;
+  text-decoration: underline;
+  cursor: pointer;
+}

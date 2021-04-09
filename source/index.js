@@ -1,6 +1,7 @@
 const http = require('http');
 const logger = require('./logger.js');
 const { createServer } = require('./server.js');
+const { startRunner } = require('./runner.js');
 const packageJSON = require('../package.json');
 
 /**
@@ -30,4 +31,5 @@ async function startServer(config) {
 module.exports = {
   createServer,
   startServer,
+  startRunner,
 };

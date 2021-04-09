@@ -1,0 +1,14 @@
+#!/usr/bin/env node
+
+const epiiMinion = require('../source');
+
+const config = {
+  name: 'example',
+};
+
+epiiMinion.startRunner(config, ({ command, options }) => {
+  console.log(command, options);
+});
+
+// example/start a b c --k1=v1 --k2=v2
+// example/start a b c --k1=v1 --k2=v2 --fork

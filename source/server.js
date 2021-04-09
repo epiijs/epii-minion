@@ -30,7 +30,7 @@ function getServerDir(key) {
  *
  * @param  {String} text
  * @param  {Object} json
- * @return {Object}
+ * @returns {Object}
  */
 function tryParseJSON(text, json) {
   try {
@@ -192,7 +192,7 @@ function handleRequest(request, response) {
  * verify and fixup config
  *
  * @param  {Object} config
- * @return {Object} linted config
+ * @returns {Object} linted config
  */
  function verifyConfig(config) {
   if (!config) throw new Error('config required');
@@ -208,14 +208,14 @@ function handleRequest(request, response) {
   if (c.unsafe) {
     logger.warn('unsafe enabled');
   }
-  return config;
+  return c;
 }
 
 /**
  * create server
  *
  * @param  {Object=} config
- * @return {Promise<Function>} standard http.Server callback
+ * @returns {Promise<Function>} standard http.Server callback
  */
 async function createServer(config) {
   // load config
