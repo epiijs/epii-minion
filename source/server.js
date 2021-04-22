@@ -2,6 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
+const { BufferList } = require('bl');
 const mime = require('mime-types');
 const logger = require('./logger');
 
@@ -10,6 +11,7 @@ const readFile = util.promisify(fs.readFile);
 
 const DATA_PREFIX = '/__data';
 const FILE_PREFIX = '/__file';
+const ICON_PREFIX = '/favicon';
 const VIEW_HOLDER = /\{\{view\}\}/g;
 
 const CONTEXT = {
@@ -27,7 +29,6 @@ function getServerDir(key) {
 /**
  * try to parse json
  * use default json if fail
- *
  * @param  {String} text
  * @param  {Object} json
  * @returns {Object}
@@ -42,8 +43,23 @@ function tryParseJSON(text, json) {
 }
 
 /**
+ * read request body as buffer
+ * @param {http.IncomingMessage} request 
+ * @returns {Promise<Buffer>}
+ */
+function readRequestBody(request) {
+  return new Promise((resolve, reject) => {
+    const bl = new BufferList();
+    request.on('error', error => reject(error));
+    request.on('data', chunk => bl.append(chunk))
+    request.on('end', () => {
+      resolve(bl.slice(0));
+    });
+  });
+}
+
+/**
  * serve request /*
- *
  * @param {http.ServerResponse} response
  * @param {String} view
  */
@@ -61,7 +77,6 @@ function serveView(response, view) {
 
 /**
  * serve request /__data/*
- *
  * @param {http.ServerResponse} response
  * @param {String} route
  * @param {Object} input
@@ -76,17 +91,17 @@ async function serveData(response, route, input, request) {
   try {
     const serverDir = getServerDir('server');
     const actionPath = require.resolve(path.join(serverDir, route));
-    if (!CONTEXT.online) {
-      // hot reload data action
-      delete require.cache[actionPath];
-      logger.warn(`data :: ${route} reload`);
-    }
     const action = require(actionPath);
     result = await action.call(null, input, request)
       .catch((error) => {
         if (error instanceof Error) return error;
         return new Error(error)
       });
+    // hot reload data action
+    if (!CONTEXT.online) {
+      delete require.cache[actionPath];
+      logger.warn(`data :: ${route} reload`);
+    }
   } catch (error) {
     result = error;
   }
@@ -111,7 +126,6 @@ async function serveData(response, route, input, request) {
 
 /**
  * serve request /__file/*
- *
  * @param {http.ServerResponse} response
  * @param {String|ReadStream} file
  */
@@ -159,16 +173,12 @@ function handleRequest(request, response) {
 
   // handle data
   if (url.pathname.startsWith(DATA_PREFIX)) {
-    // TODO - support get / put / delete
-    let buffer = '';
-    request.on('data', chunk => {
-      buffer += chunk;
-    });
-    request.on('end', () => {
-      const input = tryParseJSON(buffer, {});
-      const route = url.pathname.replace(DATA_PREFIX, '');
-      serveData(response, route, input, request);
-    });
+    readRequestBody(request)
+      .then((buffer) => {
+        const input = tryParseJSON(buffer, {});
+        const route = url.pathname.replace(DATA_PREFIX, '');
+        serveData(response, route, input, request);
+      });
     return;
   }
 
@@ -184,13 +194,20 @@ function handleRequest(request, response) {
     return;
   }
 
+  // handle icon gone
+  if (url.pathname.startsWith(ICON_PREFIX)) {
+    response.writeHead(410);
+    response.write('icon should be accessed by /__file');
+    response.end();
+    return;
+  }
+
   // handle view
   serveView(response, url.pathname);
 }
 
 /**
  * verify and fixup config
- *
  * @param  {Object} config
  * @returns {Object} linted config
  */
@@ -213,7 +230,6 @@ function handleRequest(request, response) {
 
 /**
  * create server
- *
  * @param  {Object=} config
  * @returns {Promise<Function>} standard http.Server callback
  */

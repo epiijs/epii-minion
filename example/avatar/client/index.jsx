@@ -14,7 +14,10 @@ export default function Page() {
   }, []);
 
   const throwError = () => {
-    return fetch('/__data/throwError', { method: 'POST' })
+    return fetch('/__data/throwError', {
+      method: 'POST',
+      body: JSON.stringify({ value: Math.random(), }),
+    })
       .then(response => response.json())
       .then(json => setMessage(json.error));
   }
