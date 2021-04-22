@@ -5,5 +5,8 @@ module.exports = {
     root: __dirname,
     layout: 'layout.html',
   },
+  router: {
+    '/file': '/__data/accessFile',
+  },
   extern: 'react',
 };

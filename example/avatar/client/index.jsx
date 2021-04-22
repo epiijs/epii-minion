@@ -29,6 +29,7 @@ export default function Page() {
       <ul>
         <li><a onClick={e => throwError()}>{message || 'throwError'}</a></li>
         <li><a href='/__data/accessFile' target='_blank'>accessFile</a></li>
+        <li><a href='/file' target='_blank'>short route to accessFile</a></li>
       </ul>
     </div>
   );

@@ -1,6 +1,6 @@
 {
   "name": "@epiijs/minion",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "A mini server for small web app.",
   "engines": {
     "node": ">=8.0.0"
@@ -36,7 +36,7 @@
   "devDependencies": {
     "@epiijs/render": "^3.1.0",
     "coveralls": "^3.1.0",
-    "eslint": "^7.23.0",
+    "eslint": "^7.24.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.22.1",
     "mocha": "^8.3.2",

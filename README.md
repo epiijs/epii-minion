@@ -106,6 +106,9 @@ let config = {
     server: 'server',
     static: 'static',
     layout: 'layout.html',
+    router: {
+      '/short', '/__data/fullActionName',
+    },
     aspect: 'aspect.js',
   }
 };

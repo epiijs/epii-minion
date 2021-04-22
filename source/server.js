@@ -78,19 +78,19 @@ function serveView(response, view) {
 /**
  * serve request /__data/*
  * @param {http.ServerResponse} response
- * @param {String} route
+ * @param {String} name
  * @param {Object} input
  * @param {http.IncomingMessage} request
  */
-async function serveData(response, route, input, request) {
+async function serveData(response, name, input, request) {
   if (!CONTEXT.online) {
-    logger.info(`data :: ${route}`, input);
+    logger.info(`data :: ${name}`, input);
   }
   // TODO - call aspect filter
   let result = null;
   try {
     const serverDir = getServerDir('server');
-    const actionPath = require.resolve(path.join(serverDir, route));
+    const actionPath = require.resolve(path.join(serverDir, name));
     const action = require(actionPath);
     result = await action.call(null, input, request)
       .catch((error) => {
@@ -100,7 +100,7 @@ async function serveData(response, route, input, request) {
     // hot reload data action
     if (!CONTEXT.online) {
       delete require.cache[actionPath];
-      logger.warn(`data :: ${route} reload`);
+      logger.warn(`data :: ${name} reload`);
     }
   } catch (error) {
     result = error;
@@ -164,30 +164,36 @@ async function serveFile(response, file) {
  * @returns 
  */
 function handleRequest(request, response) {
-  const url = new URL(request.url, 'http://dummyhost');
-
   // output debug url info
   if (process.env.NODE_ENV === 'development') {
     logger.info('=>', request.url);
   }
 
+  const url = new URL(request.url, 'http://dummyhost');
+
+  // parse url route
+  let route = url.pathname;
+  if (CONTEXT.router) {
+    route = CONTEXT.router[url.pathname] || route;
+  }
+
   // handle data
-  if (url.pathname.startsWith(DATA_PREFIX)) {
+  if (route.startsWith(DATA_PREFIX)) {
     readRequestBody(request)
       .then((buffer) => {
         const input = tryParseJSON(buffer, {});
-        const route = url.pathname.replace(DATA_PREFIX, '');
-        serveData(response, route, input, request);
+        const action = route.replace(DATA_PREFIX, '');
+        serveData(response, action, input, request);
       });
     return;
   }
 
   // handle file
-  if (url.pathname.startsWith(FILE_PREFIX)) {
+  if (route.startsWith(FILE_PREFIX)) {
     let fullPath = url.searchParams.get('local');
     if (!fullPath || !c.unsafe) {
       const staticDir = getServerDir('static');
-      const staticFile = url.pathname.replace(FILE_PREFIX, '');
+      const staticFile = route.replace(FILE_PREFIX, '');
       fullPath = path.join(staticDir, staticFile);
     }
     serveFile(response, fullPath);
@@ -195,7 +201,7 @@ function handleRequest(request, response) {
   }
 
   // handle icon gone
-  if (url.pathname.startsWith(ICON_PREFIX)) {
+  if (route.startsWith(ICON_PREFIX)) {
     response.writeHead(410);
     response.write('icon should be accessed by /__file');
     response.end();
@@ -203,7 +209,7 @@ function handleRequest(request, response) {
   }
 
   // handle view
-  serveView(response, url.pathname);
+  serveView(response, route);
 }
 
 /**
@@ -248,6 +254,12 @@ async function createServer(config) {
   if (conf.path.aspect) {
     const aspectPath = path.join(conf.path.root, conf.path.aspect);
     CONTEXT.render = require(aspectPath);
+  }
+
+  // load router
+  if (conf.router) {
+    // TODO - normalize routes
+    CONTEXT.router = conf.router;
   }
 
   // to handle request
